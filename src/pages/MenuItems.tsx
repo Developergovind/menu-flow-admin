@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+
 import {
   Plus,
   Edit2,
@@ -44,6 +45,7 @@ export const MenuItems: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [imageUploading, setImageUploading] = useState(false);
+  const [bulkUploading, setBulkUploading] = useState(false);
 
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -95,6 +97,53 @@ export const MenuItems: React.FC = () => {
     const matchesCategory = selectedCategory === 'all' || item.categoryId === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const handleJSONUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setBulkUploading(true);
+
+    try {
+      const text = await file.text();
+      const items = JSON.parse(text);
+
+      if (!Array.isArray(items)) throw new Error("Invalid JSON format");
+
+      const categoriesMap: Record<string, string> = {};
+      categories.forEach(c => {
+        categoriesMap[c.id] = c.name;
+      });
+
+      await bulkAddMenuItems(user.uid, items, categoriesMap);
+
+      toast({
+        title: "Success",
+        description: `${items.length} items added successfully!`,
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "Failed to upload menu items from JSON.",
+        variant: "destructive",
+      });
+    } finally {
+      setBulkUploading(false);
+      e.target.value = ""; // Reset file input
+    }
+  };
+
+  const bulkAddMenuItems = async (userId: string, items: MenuItem[], categoriesMap: Record<string, string>) => {
+    for (const item of items) {
+      const categoryName = categoriesMap[item.categoryId] || 'Unknown';
+      await addMenuItem(userId, {
+        ...item,
+        categoryName
+      });
+    }
+  };
+
 
   const handleAddItem = () => {
     if (categories.length === 0) {
@@ -262,10 +311,10 @@ export const MenuItems: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-slide-in-up">
         <div className="flex-1">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent">
-        Menu Items
+            Menu Items
           </h1>
           <p className="text-muted-foreground mt-2 animate-slide-in-up" style={{ animationDelay: '0.1s' }}>
-        Manage your restaurant's menu items
+            Manage your restaurant's menu items
           </p>
         </div>
         <Button
@@ -607,7 +656,19 @@ export const MenuItems: React.FC = () => {
               </Button>
             </div>
           </div>
+          <label htmlFor="json-upload" className="admin-button admin-gradient hover:shadow-[var(--shadow-glow)] w-full sm:w-auto cursor-pointer flex items-center justify-center gap-2">
+            <Upload className="w-4 h-4" />
+            {bulkUploading ? 'Uploading...' : 'Upload JSON'}
+            <input
+              type="file"
+              id="json-upload"
+              accept=".json"
+              onChange={handleJSONUpload}
+              className="hidden"
+            />
+          </label>
         </DialogContent>
+
       </Dialog>
     </div>
   );

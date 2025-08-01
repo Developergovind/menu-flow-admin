@@ -64,7 +64,7 @@ export const AdminLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex">
+    <div className="flex min-h-screen bg-gradient-to-br from-background to-muted/20 flex">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -149,7 +149,7 @@ export const AdminLayout: React.FC = () => {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Top header */}
         <header className="h-16 bg-card/95 backdrop-blur-xl border-b border-border/50 flex items-center justify-between px-6 shadow-[var(--shadow-soft)] relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-50 pointer-events-none"></div>
@@ -185,7 +185,7 @@ export const AdminLayout: React.FC = () => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-6 relative">
+        <main className="flex-1 p-6 overflow-y-auto">
           <div className="animate-slide-in-up">
             <Outlet />
           </div>
